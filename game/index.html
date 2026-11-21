@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lantern Market at Dusk — Spot the Difference</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #14102a;
+    color: #f5f0e6;
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  header {
+    width: 1180px;
+    max-width: 96vw;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    padding: 14px 4px 8px;
+  }
+  header h1 { font-size: 26px; letter-spacing: 0.5px; color: #fde68a; }
+  header .round { font-size: 15px; color: #c4b5fd; }
+  header .spacer { flex: 1; }
+  .stat { font-size: 16px; background: #2a2145; border: 1px solid #4c3a78; border-radius: 8px; padding: 5px 12px; }
+  .stat.low { color: #fca5a5; border-color: #ef4444; }
+  #stage { position: relative; width: 1180px; max-width: 96vw; }
+  .panels { display: flex; gap: 12px; justify-content: center; }
+  .panel { position: relative; }
+  .panel canvas {
+    display: block;
+    width: 560px;
+    height: 420px;
+    border: 3px solid #6d5aa8;
+    border-radius: 10px;
+    cursor: crosshair;
+    background: #1e1b4b;
+  }
+  .panel .tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(20, 16, 42, 0.75);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .vs {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #f59e0b;
+    color: #1e1b4b;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  footer {
+    width: 1180px;
+    max-width: 96vw;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 4px;
+  }
+  footer .tip { font-size: 13px; color: #a8a29e; flex: 1; }
+  button {
+    font: inherit;
+    font-size: 15px;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  button:hover { background: #8b5cf6; }
+  button:disabled { background: #44403c; cursor: default; }
+  button.ghost { background: #2a2145; border: 1px solid #4c3a78; }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 12, 34, 0.82);
+    border-radius: 10px;
+    z-index: 5;
+  }
+  .overlay.hidden { display: none; }
+  .card {
+    background: #241d45;
+    border: 2px solid #f59e0b;
+    border-radius: 14px;
+    padding: 28px 34px;
+    max-width: 520px;
+    text-align: center;
+  }
+  .card h2 { color: #fde68a; font-size: 30px; margin-bottom: 10px; }
+  .card p { font-size: 15px; line-height: 1.55; margin-bottom: 12px; color: #e7e5e4; }
+  .card .big { font-size: 19px; font-weight: bold; color: #a7f3d0; }
+  .card button { margin-top: 6px; font-size: 17px; padding: 10px 26px; }
+  .card ul { text-align: left; margin: 0 0 12px 22px; font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lantern Market at Dusk</h1>
+  <span class="round" id="round-name">1 · Dusk Market</span>
+  <span class="spacer"></span>
+  <span class="stat" id="found-count">Found 0 / 7</span>
+  <span class="stat" id="timer">3:00</span>
+  <span class="stat" id="score">Score 0</span>
+  <span class="stat" id="hints-left">Hints 3</span>
+</header>
+
+<div id="stage">
+  <div class="panels">
+    <div class="panel"><canvas id="panel-left"></canvas><span class="tag">LEFT</span></div>
+    <div class="panel"><canvas id="panel-right"></canvas><span class="tag">RIGHT</span></div>
+  </div>
+  <div class="vs">VS</div>
+
+  <div class="overlay" id="overlay-title">
+    <div class="card">
+      <h2>Lantern Market at Dusk</h2>
+      <p>Two pictures of the night market hang side by side — but they are not
+      quite the same. Find every difference before the clock runs out.</p>
+      <ul>
+        <li>Click a difference on either picture to ring it.</li>
+        <li>A wrong click costs 25 points.</li>
+        <li>Press <b>H</b> or the Hint button to reveal one (costs 50 points).</li>
+        <li>Three rounds, 7 then 8 then 9 differences, faster each time.</li>
+      </ul>
+      <button id="start-button">Start the hunt</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay-clear">
+    <div class="card">
+      <h2>Round clear!</h2>
+      <p class="big" id="clear-score"></p>
+      <p>Every difference in this round is ringed. The next round hides more,
+      and the clock runs shorter.</p>
+      <button id="next-button"><span id="clear-next">Next round</span></button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay-win">
+    <div class="card">
+      <h2>You found them all!</h2>
+      <p class="big" id="win-score"></p>
+      <p>The market keeper hangs a lantern in your honour. Play again to beat
+      your score.</p>
+      <button id="again-button">Play again</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay-lose">
+    <div class="card">
+      <h2>Time ran out</h2>
+      <p class="big" id="lose-score"></p>
+      <p>The lanterns dim and the market closes. The differences are still
+      out there — try again.</p>
+      <button id="retry-button">Try again</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="tip">Click a difference on either picture · H for a hint · R to restart</span>
+  <button class="ghost" id="hint-button">Hint (H)</button>
+  <button class="ghost" id="restart-button">Restart (R)</button>
+  <button class="ghost" id="mute-button">Sound on</button>
+</footer>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
